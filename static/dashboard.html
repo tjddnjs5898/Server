@@ -1,28 +1,60 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-  <meta charset="utf-8">
-  <title>WebSocket Test</title>
+    <meta charset="UTF-8">
+    <title>로봇 대시보드</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        .topic { margin-bottom: 25px; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9; }
+        pre { background: #eee; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        .label { font-weight: bold; }
+    </style>
 </head>
 <body>
-  <script>
-  const ws = new WebSocket("ws://192.168.0.15:8000/ws/realtime");
+    <h1>로봇 대시보드 (실시간 WebSocket)</h1>
 
-  ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    console.log("웹에서 수신:", data);
-    document.getElementById("battery").innerText = data.battery + "%";
-    document.getElementById("position").innerText = `(${data.x}, ${data.y}, ${data.theta})`;
-    document.getElementById("patrol_time").innerText = data.patrol_time + "s";
-    document.getElementById("patrol_distance").innerText = data.patrol_distance + "m";
-  };
-  </script>
-<h1>대시보드</h1>
+    <!-- Map 토픽 -->
+    <div class="topic">
+    <h2>맵 정보</h2>
+    <pre id="map">/map 토픽 데이터를 기다리는 중...</pre>
+    </div>
 
-<p>배터리: <span id="battery"></span></p>
-<p>위치: <span id="position"></span></p>
-<p>순찰 시간: <span id="patrol_time"></span></p>
-<p>순찰 거리: <span id="patrol_distance"></span></p>
+    <script>
+    const ws = new WebSocket("ws://192.168.0.15:8000/ws/realtime");
 
+    ws.onopen = () => {
+        console.log("WebSocket 연결됨");
+    };
+
+    ws.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+
+        if (msg.topic === "map") {
+            const data = msg.data;
+
+            // 전체 맵 크기 계산
+            const mapWidthM = (data.width * data.resolution).toFixed(2);
+            const mapHeightM = (data.height * data.resolution).toFixed(2);
+
+            // 탐지된 셀 비율 계산
+            const dataArray = data.data;
+            const detectedCells = dataArray.filter(v => v !== -1).length;
+            const totalKnownCells = dataArray.length - dataArray.filter(v => v === -1).length;
+            const detectedPercent = totalKnownCells > 0 ? (detectedCells / totalKnownCells * 100).toFixed(1) : 0;
+
+            document.getElementById("map").textContent =
+                `가로: ${mapWidthM} m (${data.width} 셀)
+    세로: ${mapHeightM} m (${data.height} 셀)
+    해상도: ${data.resolution} m/셀
+    원점: x=${data.origin.x}, y=${data.origin.y}, z=${data.origin.z}
+    탐지 구역: ${detectedPercent} %`;
+        }
+    };
+
+    ws.onclose = () => {
+        console.log("WebSocket 연결 종료");
+    };
+    </script>
 </body>
 </html>
