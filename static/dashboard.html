@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>WebSocket Test</title>
+</head>
+<body>
+  <script>
+  const ws = new WebSocket("ws://192.168.0.15:8000/ws/realtime");
+
+  ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    console.log("웹에서 수신:", data);
+    document.getElementById("battery").innerText = data.battery + "%";
+    document.getElementById("position").innerText = `(${data.x}, ${data.y}, ${data.theta})`;
+    document.getElementById("patrol_time").innerText = data.patrol_time + "s";
+    document.getElementById("patrol_distance").innerText = data.patrol_distance + "m";
+  };
+  </script>
+<h1>대시보드</h1>
+
+<p>배터리: <span id="battery"></span></p>
+<p>위치: <span id="position"></span></p>
+<p>순찰 시간: <span id="patrol_time"></span></p>
+<p>순찰 거리: <span id="patrol_distance"></span></p>
+
+</body>
+</html>
