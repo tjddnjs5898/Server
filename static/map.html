@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>turtlebot3 map</title>
+    <style>
+        #mapContainer {
+            position: relative;
+            display: inline-block;
+            border: 1px solid #ccc;
+        }
+        #mapImage {
+            width: auto;
+            height: auto;
+            max-width: 100%;
+            image-rendering: crisp-edges;
+            image-rendering: pixelated;
+        }
+        /* 🔻 로봇을 화살표(삼각형)로 표시 */
+        #robot {
+            position: absolute;
+            width: 0;
+            height: 0;
+            /* 빨간 삼각형 (앞쪽 머리) */
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-bottom: 25px solid red;
+            transform: translate(-50%, -50%) rotate(0deg);
+            transition: transform 0.1s linear;
+        }
+
+        /* 🔻 꼬리(몸통) 부분 */
+        #robot::after {
+            content: "";
+            position: absolute;
+            top: 25px; /* 삼각형 끝에 맞춤 */
+            left: -2px;
+            width: 4px;
+            height: 15px;
+            background-color: red;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <h2>터틀봇3 맵</h2>
+    <div id="mapContainer">
+        <img id="mapImage" src="/static/latest_map.png" alt="Map">
+        <div id="robot"></div>
+    </div>
+
+    <script>
+const ws = new WebSocket("ws://192.168.0.51:8000/ws/realtime");
+const robotEl = document.getElementById("robot");
+const mapEl = document.getElementById("mapImage");
+
+
+
+ws.onmessage = (event) => {
+    if (msg.startsWith("data:image/png;base64,")) {
+        mapEl.src = msg; // 실시간 맵 갱신
+      }
+
+    try {
+        const data = JSON.parse(msg);
+        if (data.topic === "amcl_pose") {
+            const x = data.data.x;
+            const y = data.data.y;
+            const theta = data.data.theta;
+
+            // === 좌표 변환 ===
+            const px = (x - mapInfo.origin_x) / mapInfo.resolution;
+            const py = mapInfo.height - ((y - mapInfo.origin_y) / mapInfo.resolution);
+
+            // === 로봇 이동 ===
+            robotEl.style.left = `${px}px`;
+            robotEl.style.top = `${py}px`;
+            robotEl.style.transform = `translate(-50%, -50%) rotate(${-theta}rad)`;
+        }
+    } catch (e) {
+        console.log("parse error:", e);
+    }
+};
+</script>
+
+</body>
+</html>

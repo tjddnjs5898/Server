@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>실시간 맵</title>
+  <style>
+    #map {
+      width: auto;
+      height: 600px;
+      image-rendering: pixelated;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+  <h2>실시간 맵</h2>
+  <img id="map" src="" alt="map">
+  <script>
+    const ws = new WebSocket("ws://192.168.0.51:8000/ws/realtime");
+    const mapEl = document.getElementById("map");
+
+    ws.onopen = () => console.log("Connected to WebSocket");
+    ws.onmessage = (event) => {
+      const msg = event.data;
+      if (msg.startsWith("data:image/png;base64,")) {
+        mapEl.src = msg; // 실시간 맵 갱신
+      }
+    };
+  </script>
+</body>
+</html>
